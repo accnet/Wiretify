@@ -25,10 +25,16 @@ echo -e "${GREEN}[+] Copying frontend assets...${NC}"
 rm -rf deploy/web
 cp -r web deploy/web
 
+echo -e "${GREEN}[+] Packing into wiretify.zip...${NC}"
+cd deploy
+rm -f wiretify.zip
+zip -r wiretify.zip wiretify web/
+cd ..
+
 echo -e "${BLUE}=======================================${NC}"
-echo -e "${GREEN}Build successful!${NC}"
+echo -e "${GREEN}Build and packing successful!${NC}"
 echo -e "Ready for deployment! Instructions:"
-echo -e "1. Zip or copy the entire 'deploy' folder to your VPS."
-echo -e "2. On the VPS, enter the folder: ${BLUE}cd deploy${NC}"
-echo -e "3. Run the installer: ${BLUE}sudo ./install.sh${NC}"
+echo -e "1. Upload 'deploy/wiretify.zip' to your own URL (e.g. Github Releases or server)."
+echo -e "2. Update DOWNLOAD_URL in 'deploy/install.sh'."
+echo -e "3. Send 'deploy/install.sh' to your VPS and run it: ${BLUE}sudo bash install.sh${NC}"
 echo -e "${BLUE}=======================================${NC}"

@@ -11,11 +11,9 @@ echo -e "${BLUE}=======================================${NC}"
 echo -e "${BLUE}   Wiretify VPS Installation Script    ${NC}"
 echo -e "${BLUE}=======================================${NC}"
 
-# Check for Pre-built binary
-if [ ! -f "wiretify" ]; then
-    echo -e "${RED}Error: 'wiretify' binary not found! Please build it first using build.sh on your local machine and upload this entire deploy folder to the VPS.${NC}"
-    exit 1
-fi
+# Configuration
+DOWNLOAD_URL="https://github.com/accnet/Wiretify/releases/latest/download/wiretify.zip" # TODO: Update this URL to point to your wiretify.zip
+TMP_DIR="/tmp/wiretify_install"
 
 # 1. Check Root
 if [ "$EUID" -ne 0 ]; then
@@ -27,10 +25,10 @@ fi
 echo -e "${GREEN}[+] Checking and installing dependencies...${NC}"
 if [ -x "$(command -v apt-get)" ]; then
     apt-get update -y
-    apt-get install -y wireguard iptables iproute2 curl wget
+    apt-get install -y wireguard iptables iproute2 curl wget unzip
 elif [ -x "$(command -v yum)" ]; then
     yum install -y epel-release
-    yum install -y wireguard-tools iptables iproute curl wget
+    yum install -y wireguard-tools iptables iproute curl wget unzip
 else
     echo -e "${RED}Unsupported package manager. Please install wireguard and iptables manually.${NC}"
     exit 1
@@ -53,14 +51,23 @@ echo -e "${GREEN}[+] Detected Public IP: ${PUBLIC_IP}${NC}"
 
 # 4. Prepare deployment directory
 echo -e "${GREEN}[+] Setting up /opt/wiretify directory...${NC}"
-mkdir -p /opt/wiretify/web
 mkdir -p /opt/wiretify/data
 
-# 5. Copy files to /opt
-echo -e "${GREEN}[+] Copying files to /opt/wiretify...${NC}"
+# 5. Download and Extract
+echo -e "${GREEN}[+] Downloading Wiretify from ${DOWNLOAD_URL}...${NC}"
+rm -rf ${TMP_DIR}
+mkdir -p ${TMP_DIR}
+wget -qO ${TMP_DIR}/wiretify.zip "${DOWNLOAD_URL}"
+
+echo -e "${GREEN}[+] Extracting files...${NC}"
+cd ${TMP_DIR}
+unzip -q wiretify.zip
 cp wiretify /opt/wiretify/
 chmod +x /opt/wiretify/wiretify
-cp -r web/* /opt/wiretify/web/
+rm -rf /opt/wiretify/web
+cp -r web /opt/wiretify/web
+cd - > /dev/null
+rm -rf ${TMP_DIR}
 
 # 6. Create Systemd Service
 echo -e "${GREEN}[+] Creating systemd service...${NC}"
