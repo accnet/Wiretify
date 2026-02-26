@@ -55,8 +55,8 @@
             <!-- Sub Navigation -->
             <nav class="-mb-px flex space-x-6 overflow-x-auto text-sm">
                 <!-- Machines -->
-                <a href="#"
-                    class="border-blue-600 text-blue-600 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-2">
+                <a href="#" onclick="switchTab('machines', this)"
+                    class="tab-btn border-blue-600 text-blue-600 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
@@ -64,6 +64,14 @@
                     </svg>
                     Machines
                 </a>
+
+                <!-- Port Forwarding -->
+                <a href="#" onclick="switchTab('portforwards', this)"
+                    class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>Port Forwarding</a>
 
                 <!-- Extra tabs from the screenshot to look exact -->
                 <a href="#"
@@ -212,6 +220,59 @@
         </div>
     </div>
 
+    <!-- Add Port Forward Modal -->
+    <div id="pf-modal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-gray-900">Add Port Forward Rule</h3>
+                <button onclick="closePFModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Public Port (VPS)</label>
+                <input type="number" id="public_port" placeholder="e.g. 13389"
+                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Target Node</label>
+                <select id="target_node"
+                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Target Port (Local)</label>
+                    <input type="number" id="target_port" placeholder="e.g. 3389"
+                        class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Protocol</label>
+                    <select id="pf_protocol"
+                        class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="tcp">TCP</option>
+                        <option value="udp">UDP</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-2">
+                <button onclick="closePFModal()"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors border border-gray-200">Cancel</button>
+                <button onclick="createPortForward()"
+                    class="bg-[#4b6bfb] hover:bg-blue-700 px-5 py-2 text-sm rounded-md font-medium text-white transition-colors">Add
+                    Rule</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Empty State Template -->
     <template id="empty-state-tpl">
         <div
@@ -251,13 +312,49 @@
                 <div class="w-16 h-16 rounded-tl-full bg-[#1e293b]"></div>
             </div>
         </div>
+        </div>
+    </template>
+
+    <template id="pf-empty-state-tpl">
+        <div
+            class="empty-banner relative rounded-xl border border-blue-100 p-10 overflow-hidden flex flex-col justify-center min-h-[220px]">
+            <div class="relative z-10 max-w-md">
+                <h2 class="text-xl font-bold text-gray-900 mb-3">Setup Port Forwarding</h2>
+                <p class="text-sm text-gray-600 mb-6">Expose your internal VPN services (like RDP, SSH, HTTP) securely
+                    to the public internet via your VPS.</p>
+                <button onclick="openPFModal()"
+                    class="bg-[#4b6bfb] hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm inline-flex items-center gap-1 transition-colors">
+                    Add rule
+                </button>
+            </div>
+        </div>
     </template>
 
     <script>
+        let cachedPeers = [];
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-600', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            el.classList.add('border-blue-600', 'text-blue-600');
+            el.classList.remove('border-transparent', 'text-gray-500');
+
+            if (tabId === 'machines') {
+                fetchPeers();
+            } else if (tabId === 'portforwards') {
+                fetchPortForwards();
+                populateNodeDropdown();
+            }
+        }
         async function fetchPeers() {
             try {
                 const res = await fetch('/api/peers');
                 const data = await res.json();
+                cachedPeers = data; // store locally for dropdowns
                 const container = document.getElementById('peer-list');
 
                 if (data.length === 0) {
@@ -360,11 +457,115 @@
         async function deletePeer(id) {
             if (!confirm('Are you sure you want to remove this device?')) return;
             try {
-                await fetch(`/api/peers/${id}`, { method: 'DELETE' });
+                await fetch('/api/peers/' + id, { method: 'DELETE' });
                 fetchPeers();
-            } catch (e) {
-                alert("Error deleting peer");
+            } catch (err) {
+                console.error("Failed to delete peer", err);
             }
+        }
+
+        async function fetchPortForwards() {
+            try {
+                const host = window.location.hostname;
+                const res = await fetch('/api/portforwards');
+                const data = await res.json();
+                const container = document.getElementById('pf-list');
+
+                if (data.length === 0) {
+                    const template = document.getElementById('pf-empty-state-tpl');
+                    container.innerHTML = '';
+                    container.appendChild(template.content.cloneNode(true));
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mapping</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Protocol</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Configured Route</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${data.map(pf => `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-semibold text-gray-900">${host}:${pf.public_port}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${pf.protocol === 'tcp' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                                                ${pf.protocol}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                            <div class="flex items-center justify-end text-sm text-gray-500 font-mono">
+                                                <span class="text-gray-400 mr-2">➜</span> ${pf.target_node}:${pf.target_port}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="deletePortForward(${pf.id})" class="text-gray-400 hover:text-red-600 transition-colors" title="Delete Rule">
+                                                <svg class="w-5 h-5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) { }
+        }
+
+        function populateNodeDropdown() {
+            const select = document.getElementById('target_node');
+            select.innerHTML = '<option value="" disabled selected>Select a machine</option>';
+            cachedPeers.forEach(p => {
+                const ip = p.allowed_ips.split('/')[0];
+                select.innerHTML += `<option value="${ip}">${p.name} (${ip})</option>`;
+            });
+        }
+
+        function openPFModal() {
+            document.getElementById('pf-modal').classList.remove('hidden');
+            document.getElementById('pf-modal').classList.add('flex');
+            populateNodeDropdown();
+        }
+
+        function closePFModal() {
+            document.getElementById('pf-modal').classList.add('hidden');
+            document.getElementById('pf-modal').classList.remove('flex');
+        }
+
+        async function createPortForward() {
+            const pubPort = parseInt(document.getElementById('public_port').value);
+            const tgNode = document.getElementById('target_node').value;
+            const tgPort = parseInt(document.getElementById('target_port').value);
+            const proto = document.getElementById('pf_protocol').value;
+
+            if (!pubPort || !tgNode || !tgPort) return;
+
+            await fetch('/api/portforwards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    public_port: pubPort,
+                    target_node: tgNode,
+                    target_port: tgPort,
+                    protocol: proto
+                })
+            });
+
+            closePFModal();
+            fetchPortForwards();
+        }
+
+        async function deletePortForward(id) {
+            if (!confirm('Are you sure you want to delete this forwarding rule?')) return;
+            await fetch('/api/portforwards/' + id, { method: 'DELETE' });
+            fetchPortForwards();
         }
 
         // Allow pressing Enter in Modal

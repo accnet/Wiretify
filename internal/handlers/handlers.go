@@ -14,16 +14,23 @@ import (
 )
 
 type PeerHandler struct {
-	wgSvc *services.WGService
+	wgSvc  *services.WGService
+	netSvc *services.NetworkService
 }
 
-func RegisterRoutes(e *echo.Group, wgSvc *services.WGService) {
-	h := &PeerHandler{wgSvc: wgSvc}
+func RegisterRoutes(e *echo.Group, wgSvc *services.WGService, netSvc *services.NetworkService) {
+	h := &PeerHandler{wgSvc: wgSvc, netSvc: netSvc}
 
+	// Peer routes
 	e.GET("/peers", h.ListPeers)
 	e.POST("/peers", h.CreatePeer)
 	e.GET("/peers/:id/config", h.GetPeerConfig)
 	e.DELETE("/peers/:id", h.DeletePeer)
+
+	// Port forward routes
+	e.GET("/portforwards", h.ListPortForwards)
+	e.POST("/portforwards", h.CreatePortForward)
+	e.DELETE("/portforwards/:id", h.DeletePortForward)
 }
 
 func (h *PeerHandler) ListPeers(c echo.Context) error {
@@ -108,6 +115,63 @@ func (h *PeerHandler) DeletePeer(c echo.Context) error {
 	database.DB.Find(&allPeers)
 	h.wgSvc.SyncPeers(allPeers)
 
+	return c.NoContent(http.StatusNoContent)
+}
+
+// --- Port Forwarding Handlers ---
+
+func (h *PeerHandler) ListPortForwards(c echo.Context) error {
+	var pfs []models.PortForward
+	if err := database.DB.Find(&pfs).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, pfs)
+}
+
+func (h *PeerHandler) CreatePortForward(c echo.Context) error {
+	var req struct {
+		PublicPort int    `json:"public_port"`
+		TargetNode string `json:"target_node"`
+		TargetPort int    `json:"target_port"`
+		Protocol   string `json:"protocol"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	pf := models.PortForward{
+		PublicPort: req.PublicPort,
+		TargetNode: req.TargetNode,
+		TargetPort: req.TargetPort,
+		Protocol:   req.Protocol,
+	}
+
+	if err := database.DB.Create(&pf).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	err := h.netSvc.AddPortForward(pf.PublicPort, pf.TargetNode, pf.TargetPort, pf.Protocol)
+	if err != nil {
+		database.DB.Delete(&pf) // rollback if kernel logic fails
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to configure iptables: %v", err)})
+	}
+
+	return c.JSON(http.StatusCreated, pf)
+}
+
+func (h *PeerHandler) DeletePortForward(c echo.Context) error {
+	id := c.Param("id")
+	var pf models.PortForward
+	if err := database.DB.First(&pf, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Port forward not found"})
+	}
+
+	if err := h.netSvc.RemovePortForward(pf.PublicPort, pf.TargetNode, pf.TargetPort, pf.Protocol); err != nil {
+		// Log warning but continue deletion
+		fmt.Printf("Warning: failed to remove iptables rules for port forward %d: %v\n", pf.PublicPort, err)
+	}
+
+	database.DB.Delete(&pf)
 	return c.NoContent(http.StatusNoContent)
 }
 

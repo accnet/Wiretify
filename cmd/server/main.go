@@ -33,6 +33,15 @@ func main() {
 		log.Printf("Warning: Firewall setup failed: %v", err)
 	}
 
+	// Restore Port Forwards from DB
+	var activePortForwards []models.PortForward
+	database.DB.Find(&activePortForwards)
+	for _, pf := range activePortForwards {
+		if err := netSvc.AddPortForward(pf.PublicPort, pf.TargetNode, pf.TargetPort, pf.Protocol); err != nil {
+			log.Printf("Warning: Failed to restore port forward %d -> %s:%d : %v", pf.PublicPort, pf.TargetNode, pf.TargetPort, err)
+		}
+	}
+
 	// 4. WG Sync
 	wgSvc, err := services.NewWGService(cfg)
 	if err != nil {
@@ -57,7 +66,7 @@ func main() {
 
 	// API Routes
 	api := e.Group("/api")
-	handlers.RegisterRoutes(api, wgSvc)
+	handlers.RegisterRoutes(api, wgSvc, netSvc)
 
 	log.Printf("Wiretify starting on :8080...")
 	e.Logger.Fatal(e.Start(":8080"))

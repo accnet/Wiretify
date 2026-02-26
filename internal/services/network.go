@@ -82,3 +82,34 @@ func (s *NetworkService) SetupFirewall() error {
 	log.Println("Firewall rules (NAT) applied")
 	return nil
 }
+
+func (s *NetworkService) AddPortForward(publicPort int, targetNode string, targetPort int, protocol string) error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return err
+	}
+	
+	ruleSpec := []string{"-p", protocol, "--dport", fmt.Sprintf("%d", publicPort), "-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%d", targetNode, targetPort)}
+	err = ipt.AppendUnique("nat", "PREROUTING", ruleSpec...)
+	if err != nil {
+		return err
+	}
+
+	forwardRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "ACCEPT"}
+	err = ipt.AppendUnique("filter", "FORWARD", forwardRule...)
+	return err
+}
+
+func (s *NetworkService) RemovePortForward(publicPort int, targetNode string, targetPort int, protocol string) error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return err
+	}
+	
+	ruleSpec := []string{"-p", protocol, "--dport", fmt.Sprintf("%d", publicPort), "-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%d", targetNode, targetPort)}
+	_ = ipt.Delete("nat", "PREROUTING", ruleSpec...)
+
+	forwardRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "ACCEPT"}
+	_ = ipt.Delete("filter", "FORWARD", forwardRule...)
+	return nil
+}
