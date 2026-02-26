@@ -12,7 +12,8 @@ echo -e "${BLUE}   Wiretify Local Build Script         ${NC}"
 echo -e "${BLUE}=======================================${NC}"
 
 # Move to project root
-cd ..
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$DIR/.."
 
 echo -e "${GREEN}[+] Compiling for Linux amd64...${NC}"
 GO_CMD="/home/accnet/local-go/bin/go"
