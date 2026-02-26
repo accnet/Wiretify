@@ -24,8 +24,10 @@ fi
 # 2. Check and Install WireGuard & iptables
 echo -e "${GREEN}[+] Checking and installing dependencies...${NC}"
 if [ -x "$(command -v apt-get)" ]; then
-    apt-get update -y
-    apt-get install -y wireguard iptables iproute2 curl wget unzip
+    export DEBIAN_FRONTEND=noninteractive
+    export NEEDRESTART_MODE=a
+    apt-get update -yq
+    apt-get install -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" wireguard iptables iproute2 curl wget unzip
 elif [ -x "$(command -v yum)" ]; then
     yum install -y epel-release
     yum install -y wireguard-tools iptables iproute curl wget unzip
@@ -41,6 +43,20 @@ if ! grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf; then
     echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 fi
 sysctl -p > /dev/null || sysctl -w net.ipv4.ip_forward=1 > /dev/null
+
+# Configure Firewall Ports
+echo -e "${GREEN}[+] Configuring Firewall ports (8080/TCP, 51820/UDP)...${NC}"
+if [ -x "$(command -v ufw)" ] && ufw status | grep -q "Status: active"; then
+    ufw allow 8080/tcp
+    ufw allow 51820/udp
+elif [ -x "$(command -v firewall-cmd)" ] && systemctl is-active --quiet firewalld; then
+    firewall-cmd --add-port=8080/tcp --permanent
+    firewall-cmd --add-port=51820/udp --permanent
+    firewall-cmd --reload
+elif [ -x "$(command -v iptables)" ]; then
+    iptables -C INPUT -p tcp --dport 8080 -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+    iptables -C INPUT -p udp --dport 51820 -j ACCEPT 2>/dev/null || iptables -I INPUT -p udp --dport 51820 -j ACCEPT
+fi
 
 # 3. Determine Public IP
 PUBLIC_IP=$(curl -s ifconfig.me)
