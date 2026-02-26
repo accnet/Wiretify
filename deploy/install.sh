@@ -12,7 +12,7 @@ echo -e "${BLUE}   Wiretify VPS Installation Script    ${NC}"
 echo -e "${BLUE}=======================================${NC}"
 
 # Configuration
-DOWNLOAD_URL="https://github.com/accnet/Wiretify/releases/latest/download/wiretify.zip" # TODO: Update this URL to point to your wiretify.zip
+DOWNLOAD_URL="https://github.com/accnet/Wiretify/raw/refs/heads/main/deploy/wiretify.zip" # TODO: Update this URL to point to your wiretify.zip
 TMP_DIR="/tmp/wiretify_install"
 
 # 1. Check Root
