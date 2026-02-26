@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiretify Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+        }
+
+        .empty-banner {
+            background-color: #f0f4f8;
+            background-image: radial-gradient(circle at 100% 100%, #e2e8f0 0%, transparent 50%);
+        }
+
+        .geo-pattern {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            overflow: hidden;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="text-gray-900 antialiased">
+
+    <!-- Top Navigation -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                    <span class="font-bold text-gray-900 ml-1">John</span>
+                </div>
+                <div class="flex items-center">
+                    <div
+                        class="w-7 h-7 rounded-full bg-green-800 text-white flex items-center justify-center text-xs font-semibold">
+                        T</div>
+                </div>
+            </div>
+
+            <!-- Sub Navigation -->
+            <nav class="-mb-px flex space-x-6 overflow-x-auto text-sm">
+                <!-- Machines -->
+                <a href="#"
+                    class="border-blue-600 text-blue-600 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
+                        </path>
+                    </svg>
+                    Machines
+                </a>
+
+                <!-- Extra tabs from the screenshot to look exact -->
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>Apps</a>
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>Services</a>
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>Users</a>
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>Access controls</a>
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>Logs</a>
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5"><svg
+                        class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+                        </path>
+                    </svg>DNS</a>
+
+                <a href="#"
+                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 border-b-2 font-medium flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Page Header -->
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Machines</h1>
+                <p class="text-sm text-gray-500 mt-1">Manage the devices connected to your tailnet. <a href="#"
+                        class="text-blue-600 hover:underline">Learn more</a></p>
+            </div>
+            <button onclick="openModal()"
+                class="bg-[#4b6bfb] hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-1 transition-colors">
+                Add device
+                <svg class="w-4 h-4 ml-1 opacity-70 border-l border-blue-400 pl-1" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Toolbar (Search & Filter) -->
+        <div class="flex gap-3 mb-6">
+            <div class="relative flex-1 max-w-2xl">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input type="text"
+                    class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Search by name, owner, tag, version...">
+            </div>
+            <button
+                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 flex items-center gap-2 text-sm font-medium transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                    </path>
+                </svg>
+                Filters
+            </button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="peer-list">
+            <!-- Loading state -->
+            <div class="animate-pulse flex space-x-4 border border-gray-200 rounded-lg p-6">
+                <div class="flex-1 space-y-4 py-1">
+                    <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for New Device -->
+    <div id="modal" class="hidden fixed inset-0 bg-gray-900/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-md shadow-2xl border border-gray-100">
+            <h2 class="text-xl font-bold mb-1 text-gray-900">Add device</h2>
+            <p class="text-sm text-gray-500 mb-6">Create a new WireGuard peer to connect to your network.</p>
+
+            <label class="block text-sm font-medium text-gray-700 mb-1">Device Name</label>
+            <input type="text" id="peer-name" placeholder="e.g. John-MacBook"
+                class="w-full bg-white border border-gray-300 rounded-md p-2.5 mb-6 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+
+            <!-- Exit Node Toggle -->
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Exit Node</label>
+                    <span class="text-xs text-gray-500 block mt-1">Route all device internet traffic through this server.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="peer-exit-node" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4b6bfb]"></div>
+                </label>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-2">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors border border-gray-200">Cancel</button>
+                <button onclick="createPeer()"
+                    class="bg-[#4b6bfb] hover:bg-blue-700 px-5 py-2 text-sm rounded-md font-medium text-white transition-colors">Add
+                    device</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State Template -->
+    <template id="empty-state-tpl">
+        <div
+            class="empty-banner relative rounded-xl border border-blue-100 p-10 overflow-hidden flex flex-col justify-center min-h-[220px]">
+            <div class="relative z-10 max-w-md">
+                <h2 class="text-xl font-bold text-gray-900 mb-3">Add your first device</h2>
+                <p class="text-sm text-gray-600 mb-6">The magic of Wiretify happens when it's installed on multiple
+                    devices.</p>
+                <button onclick="openModal()"
+                    class="bg-[#4b6bfb] hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm inline-flex items-center gap-1 transition-colors">
+                    Add device
+                    <svg class="w-4 h-4 ml-1 opacity-70 border-l border-blue-400 pl-1" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Geometric Pattern matching exact style -->
+            <div class="geo-pattern flex flex-wrap content-end justify-end gap-0.5">
+                <!-- Row 1 -->
+                <div class="w-16 h-16 rounded-tl-full bg-[#1e293b]"></div>
+                <!-- Row 2 -->
+                <div class="w-16 h-16 rounded-full bg-[#bfdbfe]"></div>
+                <div class="w-16 h-16 rounded-bl-full bg-[#2dd4bf]"></div>
+                <div class="w-16 h-16 rounded-tr-full bg-[#4b6bfb]"></div>
+                <!-- Row 3 -->
+                <div class="w-16 h-16 rounded-tr-full bg-[#1e293b]"></div>
+                <div class="w-16 h-16 rounded-full bg-[#bfdbfe]"></div>
+                <div class="w-16 h-16 rounded-full bg-[#1e293b]"></div>
+                <div class="w-16 h-16 rounded-tl-full bg-[#bfdbfe]"></div>
+                <!-- Row 4 -->
+                <div class="w-16 h-16 rounded-full bg-[#1e293b]"></div>
+                <div class="w-16 h-16 rounded-full bg-[#bfdbfe]"></div>
+                <div class="w-16 h-16 rounded-br-full bg-[#1e293b]"></div>
+                <div class="w-16 h-16 rounded-bl-full bg-[#bfdbfe]"></div>
+                <div class="w-16 h-16 rounded-tl-full bg-[#1e293b]"></div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        async function fetchPeers() {
+            try {
+                const res = await fetch('/api/peers');
+                const data = await res.json();
+                const container = document.getElementById('peer-list');
+
+                if (data.length === 0) {
+                    const template = document.getElementById('empty-state-tpl');
+                    container.innerHTML = '';
+                    container.appendChild(template.content.cloneNode(true));
+                    return;
+                }
+
+                // Standard List View (Tailscale style table)
+                container.innerHTML = `
+                    <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Machine Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">IP Address</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${data.map(peer => `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-8 w-8 text-gray-400 bg-gray-100 rounded-md flex items-center justify-center">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-semibold text-gray-900">${peer.name}</div>
+                                                    <div class="text-xs text-gray-500 font-mono mt-0.5" title="${peer.public_key}">${peer.public_key.substring(0, 15)}...</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
+                                                ${peer.allowed_ips}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <a href="/api/peers/${peer.id}/config" download="${peer.name}.conf" class="text-gray-400 hover:text-blue-600 transition-colors" title="Download Config">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                </a>
+                                                <button onclick="deletePeer(${peer.id})" class="text-gray-400 hover:text-red-600 transition-colors" title="Remove device">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) {
+                console.error("Failed to fetch peers", err);
+            }
+        }
+
+        function openModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('hidden');
+            document.getElementById('peer-name').focus();
+        }
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            document.getElementById('peer-name').value = '';
+            document.getElementById('peer-exit-node').checked = false;
+        }
+
+        async function createPeer() {
+            const nameField = document.getElementById('peer-name');
+            const toggleField = document.getElementById('peer-exit-node');
+            const name = nameField.value.trim();
+            const useExitNode = toggleField.checked;
+            
+            if (!name) return;
+
+            try {
+                await fetch('/api/peers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, use_as_exit_node: useExitNode })
+                });
+                closeModal();
+                fetchPeers();
+            } catch (e) {
+                alert("Error creating peer");
+            }
+        }
+
+        async function deletePeer(id) {
+            if (!confirm('Are you sure you want to remove this device?')) return;
+            try {
+                await fetch(`/api/peers/${id}`, { method: 'DELETE' });
+                fetchPeers();
+            } catch (e) {
+                alert("Error deleting peer");
+            }
+        }
+
+        // Allow pressing Enter in Modal
+        document.getElementById('peer-name').addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') createPeer();
+        });
+
+        fetchPeers();
+    </script>
+</body>
+
+</html>
