@@ -191,11 +191,14 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Exit Node</label>
-                    <span class="text-xs text-gray-500 block mt-1">Route all device internet traffic through this server.</span>
+                    <span class="text-xs text-gray-500 block mt-1">Route all device internet traffic through this
+                        server.</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="peer-exit-node" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4b6bfb]"></div>
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4b6bfb]">
+                    </div>
                 </label>
             </div>
 
@@ -280,8 +283,9 @@
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-8 w-8 text-gray-400 bg-gray-100 rounded-md flex items-center justify-center">
+                                                <div class="relative flex-shrink-0 h-8 w-8 text-gray-400 bg-gray-100 rounded-md flex items-center justify-center">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                    <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${peer.connected ? 'bg-green-500' : 'bg-red-400'}" title="${peer.connected ? 'Online' : 'Offline'}"></div>
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-semibold text-gray-900">${peer.name}</div>
@@ -290,8 +294,13 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
-                                                ${peer.allowed_ips}
+                                            <span class="inline-flex flex-col items-start gap-1">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
+                                                    ${peer.allowed_ips}
+                                                </span>
+                                                <span class="text-[11px] text-gray-400 font-medium">
+                                                    ↓ ${(peer.rx_bytes / 1024 / 1024).toFixed(2)} MB &nbsp; ↑ ${(peer.tx_bytes / 1024 / 1024).toFixed(2)} MB
+                                                </span>
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -332,7 +341,7 @@
             const toggleField = document.getElementById('peer-exit-node');
             const name = nameField.value.trim();
             const useExitNode = toggleField.checked;
-            
+
             if (!name) return;
 
             try {

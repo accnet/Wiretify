@@ -18,6 +18,12 @@ type Peer struct {
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+
+	// Runtime stats (không lưu DB)
+	Connected       bool      `gorm:"-" json:"connected"`
+	RxBytes         int64     `gorm:"-" json:"rx_bytes"`
+	TxBytes         int64     `gorm:"-" json:"tx_bytes"`
+	LastHandshake   time.Time `gorm:"-" json:"last_handshake"`
 }
 
 type Setting struct {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 	"wiretify/internal/database"
 	"wiretify/internal/models"
 	"wiretify/internal/services"
@@ -30,6 +31,24 @@ func (h *PeerHandler) ListPeers(c echo.Context) error {
 	if err := database.DB.Find(&peers).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+
+	// Fetch active stats from WireGuard kernel
+	wgPeers, err := h.wgSvc.GetDevicePeers()
+	if err == nil {
+		for i := range peers {
+			if wgp, ok := wgPeers[peers[i].PublicKey]; ok {
+				peers[i].RxBytes = wgp.ReceiveBytes
+				peers[i].TxBytes = wgp.TransmitBytes
+				peers[i].LastHandshake = wgp.LastHandshakeTime
+
+				// A peer is considered "Connected" if the last handshake was within the last 3 minutes
+				if !wgp.LastHandshakeTime.IsZero() && time.Since(wgp.LastHandshakeTime) < 3*time.Minute {
+					peers[i].Connected = true
+				}
+			}
+		}
+	}
+
 	return c.JSON(http.StatusOK, peers)
 }
 

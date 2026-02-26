@@ -111,3 +111,16 @@ func (s *WGService) GetServerConfig() (string, string, int) {
 func (s *WGService) GetServerAddress() string {
 	return s.cfg.Address
 }
+
+func (s *WGService) GetDevicePeers() (map[string]wgtypes.Peer, error) {
+	device, err := s.client.Device(s.cfg.InterfaceName)
+	if err != nil {
+		return nil, err
+	}
+	
+	peerMap := make(map[string]wgtypes.Peer)
+	for _, p := range device.Peers {
+		peerMap[p.PublicKey.String()] = p
+	}
+	return peerMap, nil
+}
