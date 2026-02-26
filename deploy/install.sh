@@ -106,16 +106,25 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-# 7. Start Service
+# 7. Initial configuration (.env)
+if [ ! -f /opt/wiretify/.env ]; then
+    echo -e "${GREEN}[+] Creating initial .env with default password 'admin'...${NC}"
+    echo "ADMIN_PASSWORD=admin" > /opt/wiretify/.env
+    chmod 600 /opt/wiretify/.env
+fi
+
+# 8. Start Service
 echo -e "${GREEN}[+] Starting Wiretify service...${NC}"
 systemctl daemon-reload
 systemctl enable wiretify
 systemctl restart wiretify
 
-# 8. Announce
+# 9. Announce
 echo -e "${BLUE}=======================================${NC}"
 echo -e "${GREEN}Wiretify deployed successfully!${NC}"
 echo -e "Dashboard: http://${PUBLIC_IP}:8080"
+echo -e "Initial Password: admin (Please change it immediately in the dashboard!)"
+echo -e "Config File: /opt/wiretify/.env"
 echo -e "WireGuard Port: 51820 (Ensure this UDP port is open in your VPS firewall)"
 echo -e "Service Status: systemctl status wiretify"
 echo -e "To view logs run: journalctl -fu wiretify"
