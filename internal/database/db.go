@@ -18,7 +18,7 @@ func InitDB(dbPath string) error {
 	}
 
 	log.Println("Migrating database...")
-	err = DB.AutoMigrate(&models.Peer{}, &models.Setting{}, &models.PortForward{})
+	err = DB.AutoMigrate(&models.Peer{}, &models.Setting{}, &models.PortForward{}, &models.Domain{}, &models.Endpoint{})
 	if err != nil {
 		return err
 	}

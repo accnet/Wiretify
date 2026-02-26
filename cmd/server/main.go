@@ -1,12 +1,14 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"wiretify/internal/config"
 	"wiretify/internal/database"
 	"wiretify/internal/handlers"
 	"wiretify/internal/models"
 	"wiretify/internal/services"
+	"wiretify/internal/web"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -56,17 +58,30 @@ func main() {
 		}
 	}
 
-	// 5. API Server
+	// 5. API Server & HTML Renderer
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// Init Template engine
+	renderer := &web.TemplateRenderer{
+		Templates: map[string]*template.Template{
+			"dashboard.html":    template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/dashboard.html")),
+			"port_forward.html": template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/port_forward.html")),
+			"domains.html":      template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/domains.html")),
+			"endpoints.html":    template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/endpoints.html")),
+			"access_control.html":    template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/access_control.html")),
+		},
+	}
+	e.Renderer = renderer
+
 	// Static files for Web UI
-	e.Static("/", "web")
+	e.Static("/static", "web")
 
 	// API Routes
+	domSvc := services.NewDomainService(cfg)
 	api := e.Group("/api")
-	handlers.RegisterRoutes(api, wgSvc, netSvc)
+	handlers.RegisterRoutes(e, api, wgSvc, netSvc, domSvc)
 
 	log.Printf("Wiretify starting on :8080...")
 	e.Logger.Fatal(e.Start(":8080"))

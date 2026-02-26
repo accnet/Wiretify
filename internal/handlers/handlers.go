@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 	"wiretify/internal/database"
 	"wiretify/internal/models"
@@ -16,21 +17,40 @@ import (
 type PeerHandler struct {
 	wgSvc  *services.WGService
 	netSvc *services.NetworkService
+	domSvc *services.DomainService
 }
 
-func RegisterRoutes(e *echo.Group, wgSvc *services.WGService, netSvc *services.NetworkService) {
-	h := &PeerHandler{wgSvc: wgSvc, netSvc: netSvc}
+func RegisterRoutes(e *echo.Echo, api *echo.Group, wgSvc *services.WGService, netSvc *services.NetworkService, domSvc *services.DomainService) {
+	h := &PeerHandler{wgSvc: wgSvc, netSvc: netSvc, domSvc: domSvc}
 
-	// Peer routes
-	e.GET("/peers", h.ListPeers)
-	e.POST("/peers", h.CreatePeer)
-	e.GET("/peers/:id/config", h.GetPeerConfig)
-	e.DELETE("/peers/:id", h.DeletePeer)
+	// UI Routes
+	e.GET("/", h.RenderDashboard)
+	e.GET("/ports", h.RenderPortForwardConfig)
+	e.GET("/domains", h.RenderDomains)
+	e.GET("/endpoints", h.RenderEndpoints)
+	e.GET("/access-control", h.RenderAccessControl)
 
-	// Port forward routes
-	e.GET("/portforwards", h.ListPortForwards)
-	e.POST("/portforwards", h.CreatePortForward)
-	e.DELETE("/portforwards/:id", h.DeletePortForward)
+	// API Peer routes
+	api.GET("/peers", h.ListPeers)
+	api.POST("/peers", h.CreatePeer)
+	api.GET("/peers/:id/config", h.GetPeerConfig)
+	api.DELETE("/peers/:id", h.DeletePeer)
+
+	// API Port forward routes
+	api.GET("/portforwards", h.ListPortForwards)
+	api.POST("/portforwards", h.CreatePortForward)
+	api.DELETE("/portforwards/:id", h.DeletePortForward)
+
+	// API Domain routes
+	api.GET("/domains", h.ListDomains)
+	api.POST("/domains", h.CreateDomain)
+	api.DELETE("/domains/:id", h.DeleteDomain)
+	api.POST("/domains/:id/verify", h.VerifyDomain)
+
+	// API Endpoint routes
+	api.GET("/endpoints", h.ListEndpoints)
+	api.POST("/endpoints", h.CreateEndpoint)
+	api.DELETE("/endpoints/:id", h.DeleteEndpoint)
 }
 
 func (h *PeerHandler) ListPeers(c echo.Context) error {
@@ -106,15 +126,186 @@ func (h *PeerHandler) CreatePeer(c echo.Context) error {
 
 func (h *PeerHandler) DeletePeer(c echo.Context) error {
 	id := c.Param("id")
-	if err := database.DB.Delete(&models.Peer{}, id).Error; err != nil {
+	var peer models.Peer
+	if err := database.DB.First(&peer, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Peer not found"})
+	}
+
+	// 1. Get Peer IP address (internal) e.g. "10.8.0.3" from "10.8.0.3/32"
+	peerIP := peer.AllowedIPs
+	if host, _, err := net.SplitHostPort(peer.AllowedIPs); err == nil {
+		peerIP = host
+	} else if ip, _, err := net.ParseCIDR(peer.AllowedIPs); err == nil {
+		peerIP = ip.String()
+	}
+
+	// 2. Find and delete all port forwards for this peer
+	var pfs []models.PortForward
+	database.DB.Where("target_node = ?", peerIP).Find(&pfs)
+	for _, pf := range pfs {
+		// Remove from kernel
+		if err := h.netSvc.RemovePortForward(pf.PublicPort, pf.TargetNode, pf.TargetPort, pf.Protocol); err != nil {
+			fmt.Printf("Warning: failed to remove iptables rules for port forward %d during peer deletion: %v\n", pf.PublicPort, err)
+		}
+		// Remove from DB
+		database.DB.Delete(&pf)
+	}
+
+	// 3. Delete peer from DB
+	if err := database.DB.Delete(&peer).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	// Sync to kernel
-	var allPeers []models.Peer
-	database.DB.Find(&allPeers)
-	h.wgSvc.SyncPeers(allPeers)
+	// 4. Sync WireGuard kernel state (this removes the peer from wg device)
+	var remainingPeers []models.Peer
+	database.DB.Find(&remainingPeers)
+	h.wgSvc.SyncPeers(remainingPeers)
 
+	return c.NoContent(http.StatusNoContent)
+}
+
+// --- Domain Handlers ---
+
+func (h *PeerHandler) ListDomains(c echo.Context) error {
+	var domains []models.Domain
+	database.DB.Find(&domains)
+	return c.JSON(http.StatusOK, domains)
+}
+
+func (h *PeerHandler) CreateDomain(c echo.Context) error {
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	domainName := strings.TrimSpace(req.Name)
+	if domainName == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Domain name is required"})
+	}
+
+	// Tạo mã xác thực ngẫu nhiên
+	token := fmt.Sprintf("wiretify-verification-%d", time.Now().UnixNano()/1000000)
+
+	domain := models.Domain{
+		Name:              domainName,
+		VerificationToken: token,
+		Status:            "Pending",
+	}
+
+	if err := database.DB.Create(&domain).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, domain)
+}
+
+func (h *PeerHandler) DeleteDomain(c echo.Context) error {
+	id := c.Param("id")
+	database.DB.Delete(&models.Domain{}, id)
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *PeerHandler) VerifyDomain(c echo.Context) error {
+	id := c.Param("id")
+	var domain models.Domain
+	if err := database.DB.First(&domain, id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Domain not found"})
+	}
+
+	ok, msg, err := h.domSvc.VerifyDomainChecks(domain.Name, domain.VerificationToken)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	if ok {
+		now := time.Now()
+		domain.Status = "Active"
+		domain.LastVerifiedAt = &now
+		database.DB.Save(&domain)
+		return c.JSON(http.StatusOK, map[string]interface{}{"success": true, "message": msg})
+	}
+
+	return c.JSON(http.StatusBadRequest, map[string]interface{}{"success": false, "message": msg})
+}
+
+// --- Endpoint Handlers ---
+
+func (h *PeerHandler) ListEndpoints(c echo.Context) error {
+	var endpoints []models.Endpoint
+	// Preload Peer and Domain info
+	database.DB.Preload("Peer").Preload("Domain").Find(&endpoints)
+	
+	// Format the full addresses for UI convenience
+	type resp struct {
+		ID          uint   `json:"id"`
+		Subdomain   string `json:"subdomain"`
+		RootDomain  string `json:"root_domain"`
+		PeerName    string `json:"peer_name"`
+		FullAddress string `json:"full_address"`
+	}
+	
+	data := make([]resp, len(endpoints))
+	for i, ep := range endpoints {
+		data[i] = resp{
+			ID:          ep.ID,
+			Subdomain:   ep.Subdomain,
+			RootDomain:  ep.Domain.Name,
+			PeerName:    ep.Peer.Name,
+			FullAddress: fmt.Sprintf("%s.%s", ep.Subdomain, ep.Domain.Name),
+		}
+	}
+	
+	return c.JSON(http.StatusOK, data)
+}
+
+func (h *PeerHandler) CreateEndpoint(c echo.Context) error {
+	var req struct {
+		PeerID    uint   `json:"peer_id"`
+		DomainID  uint   `json:"domain_id"`
+		Subdomain string `json:"subdomain"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	subdomain := strings.TrimSpace(req.Subdomain)
+	if subdomain == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Subdomain is required"})
+	}
+
+	// 1. Kiểm tra domain xem có active chưa
+	var domain models.Domain
+	if err := database.DB.First(&domain, req.DomainID).Error; err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Root domain not found"})
+	}
+	if domain.Status != "Active" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Root domain must be Active to create endpoints"})
+	}
+
+	// 2. Kiểm tra trùng lặp subdomain trên cùng domain
+	var existing models.Endpoint
+	if err := database.DB.Where("domain_id = ? AND subdomain = ?", req.DomainID, subdomain).First(&existing).Error; err == nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Subdomain already exists for this domain"})
+	}
+
+	endpoint := models.Endpoint{
+		PeerID:    req.PeerID,
+		DomainID:  req.DomainID,
+		Subdomain: subdomain,
+	}
+
+	if err := database.DB.Create(&endpoint).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, endpoint)
+}
+
+func (h *PeerHandler) DeleteEndpoint(c echo.Context) error {
+	id := c.Param("id")
+	database.DB.Delete(&models.Endpoint{}, id)
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -139,6 +330,18 @@ func (h *PeerHandler) CreatePortForward(c echo.Context) error {
 		return err
 	}
 
+	// 1. Check if public port is already in use for this protocol
+	var existing models.PortForward
+	if err := database.DB.Where("public_port = ? AND protocol = ?", req.PublicPort, req.Protocol).First(&existing).Error; err == nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Public port %d (%s) is already in use", req.PublicPort, req.Protocol)})
+	}
+
+	// 2. Optional: Verify target node IP exists in our peers list
+	var peer models.Peer
+	if err := database.DB.Where("allowed_ips LIKE ?", req.TargetNode+"/%").First(&peer).Error; err != nil {
+		// Log but allow (maybe it's a manual entry)
+	}
+
 	pf := models.PortForward{
 		PublicPort: req.PublicPort,
 		TargetNode: req.TargetNode,
@@ -152,7 +355,7 @@ func (h *PeerHandler) CreatePortForward(c echo.Context) error {
 
 	err := h.netSvc.AddPortForward(pf.PublicPort, pf.TargetNode, pf.TargetPort, pf.Protocol)
 	if err != nil {
-		database.DB.Delete(&pf) // rollback if kernel logic fails
+		database.DB.Unscoped().Delete(&pf) // hard delete if kernel logic fails to avoid DB pollution
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to configure iptables: %v", err)})
 	}
 
@@ -261,4 +464,42 @@ func allocateNextIP(baseCIDR string, peers []models.Peer) (string, error) {
 	}
 
 	return "", fmt.Errorf("no available IPs in subnet")
+}
+
+// --- Front-end Page renderers ---
+
+func (h *PeerHandler) RenderDashboard(c echo.Context) error {
+	return h.RenderDashboardPage(c)
+}
+
+func (h *PeerHandler) RenderDashboardPage(c echo.Context) error {
+	return c.Render(http.StatusOK, "dashboard.html", map[string]interface{}{
+		"CurrentPage": "dashboard",
+	})
+}
+
+func (h *PeerHandler) RenderPortForwardConfig(c echo.Context) error {
+	_, endpoint, _ := h.wgSvc.GetServerConfig()
+	return c.Render(http.StatusOK, "port_forward.html", map[string]interface{}{
+		"CurrentPage": "ports",
+		"PublicIP":    endpoint,
+	})
+}
+
+func (h *PeerHandler) RenderDomains(c echo.Context) error {
+	return c.Render(http.StatusOK, "domains.html", map[string]interface{}{
+		"CurrentPage": "domains",
+	})
+}
+
+func (h *PeerHandler) RenderEndpoints(c echo.Context) error {
+	return c.Render(http.StatusOK, "endpoints.html", map[string]interface{}{
+		"CurrentPage": "endpoints",
+	})
+}
+
+func (h *PeerHandler) RenderAccessControl(c echo.Context) error {
+	return c.Render(http.StatusOK, "access_control.html", map[string]interface{}{
+		"CurrentPage": "access_control",
+	})
 }

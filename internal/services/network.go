@@ -95,8 +95,17 @@ func (s *NetworkService) AddPortForward(publicPort int, targetNode string, targe
 		return err
 	}
 
+	// Masquerade traffic to the destination to ensure it comes back through the VPS (SNAT)
+	masqRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "MASQUERADE"}
+	_ = ipt.AppendUnique("nat", "POSTROUTING", masqRule...)
+
+	// Allow forwarding
 	forwardRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "ACCEPT"}
 	err = ipt.AppendUnique("filter", "FORWARD", forwardRule...)
+	
+	if err == nil {
+		fmt.Printf("Network: Added Port Forward: Public %d/%s -> %s:%d\n", publicPort, protocol, targetNode, targetPort)
+	}
 	return err
 }
 
@@ -106,8 +115,13 @@ func (s *NetworkService) RemovePortForward(publicPort int, targetNode string, ta
 		return err
 	}
 	
+	fmt.Printf("Network: Removing Port Forward: Public %d/%s -> %s:%d\n", publicPort, protocol, targetNode, targetPort)
+	
 	ruleSpec := []string{"-p", protocol, "--dport", fmt.Sprintf("%d", publicPort), "-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%d", targetNode, targetPort)}
 	_ = ipt.Delete("nat", "PREROUTING", ruleSpec...)
+
+	masqRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "MASQUERADE"}
+	_ = ipt.Delete("nat", "POSTROUTING", masqRule...)
 
 	forwardRule := []string{"-p", protocol, "-d", targetNode, "--dport", fmt.Sprintf("%d", targetPort), "-j", "ACCEPT"}
 	_ = ipt.Delete("filter", "FORWARD", forwardRule...)

@@ -1,0 +1,226 @@
+{{define "content"}}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="endpointManager()">
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Endpoints</h1>
+            <p class="text-sm text-gray-500 mt-1">Map your machines to easy-to-remember subdomains.</p>
+        </div>
+        <button @click="openModal()"
+            class="bg-[#4b6bfb] hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-1 transition-colors">
+            New Endpoint
+        </button>
+    </div>
+
+    <!-- Empty State -->
+    <template x-if="endpoints.length === 0">
+        <div class="bg-white border border-dashed border-gray-300 rounded-xl p-12 text-center">
+            <div class="mx-auto w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Assign an Endpoint</h3>
+            <p class="text-gray-500 max-w-sm mx-auto mb-6">Create subdomains for your machines like
+                <strong>tuupc.example.com</strong> for easier access.</p>
+            <button @click="openModal()" class="text-blue-600 font-semibold hover:underline">Create your first
+                endpoint</button>
+        </div>
+    </template>
+
+    <!-- Table List -->
+    <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden" x-show="endpoints.length > 0">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Subdomain</th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Machine
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <template x-for="ep in endpoints" :key="ep.id">
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-bold text-blue-600" x-text="ep.full_address"></div>
+                                <button @click="copyText(ep.full_address)" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-900 font-medium" x-text="ep.peer_name"></span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button @click="deleteEndpoint(ep.id)"
+                                class="text-gray-400 hover:text-red-500 transition-colors">
+                                <svg class="w-5 h-5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Create Modal -->
+    <div id="modal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold text-gray-900">New Endpoint Mapping</h3>
+                <button @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Target Machine</label>
+                    <select x-model="form.peer_id"
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">Select a machine</option>
+                        <template x-for="p in machines" :key="p.id">
+                            <option :value="p.id" x-text="p.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Subdomain Name</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" x-model="form.subdomain" placeholder="e.g. tuupc"
+                            class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <span class="text-gray-400">.</span>
+                        <select x-model="form.domain_id"
+                            class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">Root Domain</option>
+                            <template x-for="d in activeDomains" :key="d.id">
+                                <option :value="d.id" x-text="d.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Example: <span class="font-bold text-blue-500"
+                            x-text="form.subdomain || 'name'"></span><span class="text-blue-500">.</span><span
+                            class="font-bold text-blue-500"
+                            x-text="activeDomains.find(d => d.id == form.domain_id)?.name || 'domain.com'"></span></p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+                <button @click="closeModal()"
+                    class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+                <button @click="createEndpoint()" :disabled="!form.peer_id || !form.domain_id || !form.subdomain"
+                    class="bg-[#4b6bfb] hover:bg-blue-700 px-6 py-2 rounded-lg font-bold text-white transition-colors disabled:opacity-50">Create
+                    Mapping</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function endpointManager() {
+        return {
+            endpoints: [],
+            machines: [],
+            activeDomains: [],
+            form: {
+                peer_id: '',
+                domain_id: '',
+                subdomain: ''
+            },
+
+            init() {
+                this.fetchData();
+            },
+
+            async fetchData() {
+                try {
+                    const [resEp, resPeer, resDom] = await Promise.all([
+                        fetch('/api/endpoints'),
+                        fetch('/api/peers'),
+                        fetch('/api/domains')
+                    ]);
+                    this.endpoints = await resEp.json();
+                    this.machines = await resPeer.json();
+                    const allDoms = await resDom.json();
+                    this.activeDomains = allDoms.filter(d => d.status === 'Active');
+                } catch (err) { }
+            },
+
+            openModal() {
+                if (this.activeDomains.length === 0) {
+                    alert('Please add and verify a Domain first.');
+                    return;
+                }
+                const m = document.getElementById('modal');
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            },
+
+            closeModal() {
+                const m = document.getElementById('modal');
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+                this.form = { peer_id: '', domain_id: '', subdomain: '' };
+            },
+
+            async createEndpoint() {
+                try {
+                    const res = await fetch('/api/endpoints', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.form)
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || 'Failed to create endpoint');
+                    }
+                    this.closeModal();
+                    this.fetchData();
+                } catch (err) {
+                    alert(err.message);
+                }
+            },
+
+            async deleteEndpoint(id) {
+                if (!confirm('Are you sure?')) return;
+                try {
+                    await fetch('/api/endpoints/' + id, { method: 'DELETE' });
+                    this.fetchData();
+                } catch (err) { }
+            },
+
+            copyText(text) {
+                navigator.clipboard.writeText(text);
+            }
+        }
+    }
+</script>
+{{end}}
