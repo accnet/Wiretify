@@ -3,7 +3,15 @@
     <!-- Page Header -->
     <div class="flex justify-between items-start mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Machines</h1>
+            <div class="flex items-center gap-2">
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Machines</h1>
+                <span class="flex h-2 w-2 relative">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Live</span>
+            </div>
             <p class="text-sm text-gray-500 mt-1">Manage the devices connected to your tailnet. <a href="#"
                     class="text-blue-600 hover:underline">Learn more</a></p>
         </div>
@@ -208,12 +216,12 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             ${data.map(peer => `
-                             <tr class="hover:bg-gray-50 transition-colors">
+                                <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="relative flex-shrink-0 h-8 w-8 text-gray-400 bg-gray-100 rounded-md flex items-center justify-center">
                                                 ${renderPeerIcon(peer.icon)}
-                                                <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${peer.connected ? 'bg-green-500' : 'bg-red-400'}" title="${peer.connected ? 'Online' : 'Offline'}"></div>
+                                                <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${peer.connected ? 'bg-green-500' : 'bg-red-400'} ${peer.connected ? 'animate-pulse' : ''}" title="${peer.connected ? 'Online' : 'Offline'}"></div>
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-semibold text-gray-900">${peer.name}</div>
@@ -226,8 +234,17 @@
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 font-mono">
                                                 ${peer.allowed_ips}
                                             </span>
-                                            <span class="text-[11px] text-gray-400 font-medium">
-                                                ↓ ${(peer.rx_bytes / 1024 / 1024).toFixed(2)} MB &nbsp; ↑ ${(peer.tx_bytes / 1024 / 1024).toFixed(2)} MB
+                                            <span class="text-[11px] text-gray-400 font-medium flex items-center gap-2">
+                                                <span class="flex items-center gap-0.5">
+                                                    <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                                                    ${(peer.rx_bytes / 1024 / 1024).toFixed(2)} MB
+                                                    <span class="text-[10px] text-blue-500 font-bold ml-0.5">${calculateSpeed(peer.id, peer.rx_bytes, 'rx')}</span>
+                                                </span>
+                                                <span class="flex items-center gap-0.5">
+                                                    <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                                    ${(peer.tx_bytes / 1024 / 1024).toFixed(2)} MB
+                                                    <span class="text-[10px] text-purple-500 font-bold ml-0.5">${calculateSpeed(peer.id, peer.tx_bytes, 'tx')}</span>
+                                                </span>
                                             </span>
                                         </span>
                                     </td>
@@ -326,6 +343,42 @@
         if (e.key === 'Enter') createPeer();
     });
 
+    let lastStats = {}; // {id: {rx, tx, ts}}
+
+    function calculateSpeed(id, currentBytes, type) {
+        const now = Date.now();
+        if (!lastStats[id]) {
+            lastStats[id] = { rx: 0, tx: 0, ts: now };
+        }
+
+        const prev = lastStats[id];
+        const dt = (now - prev.ts) / 1000; // seconds
+        let speed = 0;
+
+        if (dt > 0) {
+            const diff = currentBytes - prev[type];
+            speed = diff / dt;
+        }
+
+        // Update for next cycle after ALL calls for this peer are done
+        // We'll update the timestamp and bytes at the end of fetchPeers loop or rely on the order
+        if (type === 'tx') { // Assuming tx is called last
+            lastStats[id].rx = lastStats[id].temp_rx || lastStats[id].rx;
+            lastStats[id].tx = currentBytes;
+            lastStats[id].ts = now;
+        } else {
+            lastStats[id].temp_rx = currentBytes;
+        }
+
+        if (speed <= 0) return '';
+
+        if (speed < 1024) return `(${speed.toFixed(0)} B/s)`;
+        if (speed < 1024 * 1024) return `(${(speed / 1024).toFixed(1)} KB/s)`;
+        return `(${(speed / (1024 * 1024)).toFixed(1)} MB/s)`;
+    }
+
     fetchPeers();
+    // Realtime polling every 5 seconds
+    setInterval(fetchPeers, 5000);
 </script>
 {{end}}
