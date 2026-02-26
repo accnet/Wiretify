@@ -1,6 +1,7 @@
 # Binaries
 wiretify
 deploy/wiretify
+deploy/web/
 *.exe
 *.exe~
 *.dll
