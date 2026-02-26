@@ -29,6 +29,10 @@
             opacity: 0.8;
             pointer-events: none;
         }
+
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -38,18 +42,55 @@
     <header class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14">
+                <!-- Brand / Logo -->
                 <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
                         </path>
                     </svg>
-                    <span class="font-bold text-gray-900 ml-1">John</span>
+                    <span class="font-bold text-gray-900 ml-1">Wiretify</span>
                 </div>
-                <div class="flex items-center">
-                    <div
-                        class="w-7 h-7 rounded-full bg-green-800 text-white flex items-center justify-center text-xs font-semibold">
-                        T</div>
+
+                <!-- User Dropdown (On the Right) -->
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
+                        <span class="font-medium text-sm text-gray-600">Admin</span>
+                        <div
+                            class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold shadow-sm overflow-hidden border-2 border-white">
+                            A
+                        </div>
+                    </button>
+                    <!-- Dropdown -->
+                    <div x-show="open" @click.outside="open = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 overflow-hidden"
+                        x-cloak>
+                        <button @click="$dispatch('open-change-password'); open = false"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z">
+                                </path>
+                            </svg>
+                            Change Password
+                        </button>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <a href="/logout"
+                            class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -125,8 +166,35 @@
         </div>
     </header>
 
-    <hr>
     {{template "content" .}}
+
+    <!-- Change Password Modal -->
+    <div x-data="{ show: false, newPassword: '', loading: false }" @open-change-password.window="show = true"
+        x-show="show" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" x-cloak>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Change Admin Password</h3>
+            <div class="space-y-4">
+                <input type="password" x-model="newPassword" placeholder="New Password"
+                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <div class="flex justify-end gap-3 mt-4">
+                    <button @click="show = false"
+                        class="px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+                    <button @click="
+                        loading = true;
+                        fetch('/api/change-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ new_password: newPassword })
+                        }).then(r => r.ok ? window.location.reload() : alert('Failed to update password'))
+                        .finally(() => loading = false)"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold text-sm transition-colors"
+                        :disabled="!newPassword || loading">
+                        Update Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

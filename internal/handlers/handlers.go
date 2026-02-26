@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+	"wiretify/internal/config"
 	"wiretify/internal/database"
 	"wiretify/internal/models"
 	"wiretify/internal/services"
@@ -18,10 +20,19 @@ type PeerHandler struct {
 	wgSvc  *services.WGService
 	netSvc *services.NetworkService
 	domSvc *services.DomainService
+	cfg    *config.Config
 }
 
-func RegisterRoutes(e *echo.Echo, api *echo.Group, wgSvc *services.WGService, netSvc *services.NetworkService, domSvc *services.DomainService) {
-	h := &PeerHandler{wgSvc: wgSvc, netSvc: netSvc, domSvc: domSvc}
+func RegisterRoutes(e *echo.Echo, api *echo.Group, wgSvc *services.WGService, netSvc *services.NetworkService, domSvc *services.DomainService, cfg *config.Config) {
+	h := &PeerHandler{wgSvc: wgSvc, netSvc: netSvc, domSvc: domSvc, cfg: cfg}
+
+	// Public Routes
+	e.GET("/login", h.ShowLogin)
+	e.POST("/login", h.PostLogin)
+	e.GET("/logout", h.Logout)
+
+	// Auth Middleware for all other routes
+	e.Use(h.AuthMiddleware)
 
 	// UI Routes
 	e.GET("/", h.RenderDashboard)
@@ -51,6 +62,102 @@ func RegisterRoutes(e *echo.Echo, api *echo.Group, wgSvc *services.WGService, ne
 	api.GET("/endpoints", h.ListEndpoints)
 	api.POST("/endpoints", h.CreateEndpoint)
 	api.DELETE("/endpoints/:id", h.DeleteEndpoint)
+
+	// API Auth
+	api.POST("/change-password", h.ChangePassword)
+}
+
+func (h *PeerHandler) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		path := c.Path()
+		if path == "/login" || path == "/logout" || strings.HasPrefix(path, "/static") {
+			return next(c)
+		}
+
+		cookie, err := c.Cookie("session")
+		// For simplicity, we compare context to the password. 
+		// In production, use a proper session store or JWT.
+		if err != nil || cookie.Value != h.cfg.AdminPassword || h.cfg.AdminPassword == "" {
+			if strings.HasPrefix(path, "/api/") {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+			}
+			return c.Redirect(http.StatusFound, "/login")
+		}
+		return next(c)
+	}
+}
+
+func (h *PeerHandler) ShowLogin(c echo.Context) error {
+	return c.Render(http.StatusOK, "login.html", nil)
+}
+
+func (h *PeerHandler) PostLogin(c echo.Context) error {
+	password := c.FormValue("password")
+	if password == h.cfg.AdminPassword && h.cfg.AdminPassword != "" {
+		cookie := &http.Cookie{
+			Name:     "session",
+			Value:    password,
+			Path:     "/",
+			HttpOnly: true,
+			Expires:  time.Now().Add(24 * time.Hour),
+		}
+		c.SetCookie(cookie)
+		return c.Redirect(http.StatusFound, "/")
+	}
+	return c.Render(http.StatusUnauthorized, "login.html", map[string]interface{}{"Error": "Invalid password"})
+}
+
+func (h *PeerHandler) Logout(c echo.Context) error {
+	cookie := &http.Cookie{
+		Name:     "session",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	}
+	c.SetCookie(cookie)
+	return c.Redirect(http.StatusFound, "/login")
+}
+
+func (h *PeerHandler) ChangePassword(c echo.Context) error {
+	var req struct {
+		NewPassword string `json:"new_password"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	newPwd := strings.TrimSpace(req.NewPassword)
+	if newPwd == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Password cannot be empty"})
+	}
+
+	// Update in-memory config
+	h.cfg.AdminPassword = newPwd
+
+	// Update .env file (very basic replacement)
+	envPath := ".env"
+	data, err := os.ReadFile(envPath)
+	if err == nil {
+		lines := strings.Split(string(data), "\n")
+		found := false
+		for i, line := range lines {
+			if strings.HasPrefix(line, "ADMIN_PASSWORD=") {
+				lines[i] = "ADMIN_PASSWORD=" + newPwd
+				found = true
+				break
+			}
+		}
+		if !found {
+			lines = append(lines, "ADMIN_PASSWORD="+newPwd)
+		}
+		_ = os.WriteFile(envPath, []byte(strings.Join(lines, "\n")), 0644)
+	} else {
+		// If .env doesn't exist, create it
+		_ = os.WriteFile(envPath, []byte("ADMIN_PASSWORD="+newPwd), 0644)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Password updated successfully"})
 }
 
 func (h *PeerHandler) ListPeers(c echo.Context) error {
@@ -83,6 +190,7 @@ func (h *PeerHandler) CreatePeer(c echo.Context) error {
 	var req struct {
 		Name          string `json:"name"`
 		UseAsExitNode bool   `json:"use_as_exit_node"`
+		Icon          string `json:"icon"`
 	}
 	if err := c.Bind(&req); err != nil {
 		return err
@@ -111,6 +219,7 @@ func (h *PeerHandler) CreatePeer(c echo.Context) error {
 		AllowedIPs:    nextIP,
 		UseAsExitNode: req.UseAsExitNode,
 		Enabled:       true,
+		Icon:          req.Icon,
 	}
 
 	if err := database.DB.Create(&peer).Error; err != nil {

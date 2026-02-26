@@ -145,6 +145,8 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Public Address</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Protocol</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Target Machine</th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Internal Target</th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -171,6 +173,19 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${pf.protocol === 'tcp' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
                                             ${pf.protocol}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                                            ${getPortLabel(pf.target_port)}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 flex-shrink-0 text-gray-400">
+                                                ${peer ? renderPeerIcon(peer.icon) : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>'}
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900">${peer ? peer.name : 'Unknown'}</span>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
                                         <div class="flex items-center justify-end text-sm text-gray-500 font-mono">
@@ -230,6 +245,41 @@
         if (!confirm('Are you sure you want to delete this forwarding rule?')) return;
         await fetch('/api/portforwards/' + id, { method: 'DELETE' });
         fetchPortForwards();
+    }
+
+    function getPortLabel(port) {
+        const commonPorts = {
+            21: 'FTP',
+            22: 'SSH',
+            23: 'Telnet',
+            25: 'SMTP',
+            53: 'DNS',
+            80: 'HTTP',
+            443: 'HTTPS',
+            445: 'SMB',
+            1433: 'MSSQL',
+            3306: 'MySQL',
+            3389: 'RDP',
+            5432: 'Postgres',
+            5900: 'VNC',
+            6379: 'Redis',
+            8080: 'HTTP-Alt',
+            27017: 'MongoDB'
+        };
+        return commonPorts[port] || 'Other';
+    }
+
+    function renderPeerIcon(iconSlug) {
+        const icons = {
+            linux: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12.44,1.4C12,1.26,11.51,1.15,11,1.07V1.04C10.74,1,10.47,1,10.2,1,7.21,1,4.78,3.43,4.78,6.41c0,.2,0,.41,.03,.61C4.3,7.69,4,8.44,4,9.22c0,3,2,5.54,4.72,6.4,0,0,0,0,0,0-.4,1.21-2.18,1.6-3.48,1.86C4.4,17.65,4,18,4,18.44V20a2.02,2.02,0,0,0,.59,1.41A1.97,1.97,0,0,0,6,22H18a1.97,1.97,0,0,0,1.41-.59A2.02,2.02,0,0,0,20,20V18.44c0-.42-.31-.76-.73-.83-1.3-.26-3.08-.65-3.48-1.86,0,0,0,0,0,0,2.72-.86,4.72-3.4,4.72-6.4,0-.73-.26-1.42-.71-1.97.03-.23.04-.47.04-.71,0-2.98-2.43-5.41-5.41-5.41Z"/></svg>`,
+            windows: `<svg class="w-5 h-5 text-[#0078d4]" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699m10.949-7.949H24V24l-13.051-1.8Z"/></svg>`,
+            macos: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-2-12h4v1h-4v-1zm0 3h4v1h-4v-1zm0 3h4v1h-4v-1z"/></svg>`,
+            apple: `<svg class="w-5 h-5 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.1 2.48-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>`,
+            android: `<svg class="w-5 h-5 text-[#a4c639]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414C17.523 15.7725 17.1725 16.123 16.7414 16.123C16.3103 16.123 15.9598 15.7725 15.9598 15.3414C15.9598 14.9103 16.3103 14.5598 16.7414 14.5598C17.1725 14.5598 17.523 14.9103 17.523 15.3414ZM8.0402 15.3414C8.0402 15.7725 7.6897 16.123 7.2586 16.123C6.8275 16.123 6.477 15.7725 6.477 15.3414C6.477 14.9103 6.8275 14.5598 7.2586 14.5598C7.6897 14.5598 8.0402 14.9103 8.0402 15.3414ZM19.236 11.2359L21.1437 7.9354C21.2828 7.6961 21.199 7.388 20.9597 7.2489C20.7204 7.1098 20.4124 7.1936 20.2733 7.4329L18.3375 10.7818C16.6341 10.0076 14.7118 9.5693 12.6 9.5693C10.4882 9.5693 8.5659 10.0076 6.8625 10.7818L4.9267 7.4329C4.7876 7.1936 4.4795 7.1098 4.2402 7.2489C4.0009 7.388 3.9171 7.6961 4.0562 7.9354L5.964 11.2359C3.1206 12.637 1.1818 15.4243 1.1818 18.7182H22.8182C22.8182 15.4243 20.8794 12.637 18.036 11.2359L19.236 11.2359Z"/></svg>`,
+            synology: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4zm1 2h14v10H5V6zm2 2v2h2V8H7zm3 0v2h2V8h-2zm3 0v2h2V8h-2zm-6 3v2h2v-2H7zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2z"/></svg>`,
+            default: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`
+        };
+        return icons[iconSlug] || icons.default;
     }
 
     function copyToClipboard(text) {

@@ -71,6 +71,7 @@ func main() {
 			"domains.html":      template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/domains.html")),
 			"endpoints.html":    template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/endpoints.html")),
 			"access_control.html":    template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/access_control.html")),
+			"login.html":       template.Must(template.ParseFiles("web/templates/login.html")),
 		},
 	}
 	e.Renderer = renderer
@@ -81,7 +82,7 @@ func main() {
 	// API Routes
 	domSvc := services.NewDomainService(cfg)
 	api := e.Group("/api")
-	handlers.RegisterRoutes(e, api, wgSvc, netSvc, domSvc)
+	handlers.RegisterRoutes(e, api, wgSvc, netSvc, domSvc, cfg)
 
 	log.Printf("Wiretify starting on :8080...")
 	e.Logger.Fatal(e.Start(":8080"))

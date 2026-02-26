@@ -61,7 +61,60 @@
 
         <label class="block text-sm font-medium text-gray-700 mb-1">Device Name</label>
         <input type="text" id="peer-name" placeholder="e.g. John-MacBook"
-            class="w-full bg-white border border-gray-300 rounded-md p-2.5 mb-6 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            class="w-full bg-white border border-gray-300 rounded-md p-2.5 mb-5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+
+        <!-- Icon Picker -->
+        <label class="block text-sm font-medium text-gray-700 mb-2">Device Icon</label>
+        <div class="grid grid-cols-3 gap-3 mb-6" id="icon-picker">
+            <button onclick="selectIcon('windows', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6 text-[#0078d4]" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699m10.949-7.949H24V24l-13.051-1.8Z" />
+                </svg>
+                <span class="text-[10px] font-medium">Windows</span>
+            </button>
+            <button onclick="selectIcon('linux', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12.44,1.4C12,1.26,11.51,1.15,11,1.07V1.04C10.74,1,10.47,1,10.2,1,7.21,1,4.78,3.43,4.78,6.41c0,.2,0,.41,.03,.61C4.3,7.69,4,8.44,4,9.22c0,3,2,5.54,4.72,6.4,0,0,0,0,0,0-.4,1.21-2.18,1.6-3.48,1.86C4.4,17.65,4,18,4,18.44V20a2.02,2.02,0,0,0,.59,1.41A1.97,1.97,0,0,0,6,22H18a1.97,1.97,0,0,0,1.41-.59A2.02,2.02,0,0,0,20,20V18.44c0-.42-.31-.76-.73-.83-1.3-.26-3.08-.65-3.48-1.86,0,0,0,0,0,0,2.72-.86,4.72-3.4,4.72-6.4,0-.73-.26-1.42-.71-1.97.03-.23.04-.47.04-.71,0-2.98-2.43-5.41-5.41-5.41Z" />
+                </svg>
+                <span class="text-[10px] font-medium">Linux</span>
+            </button>
+            <button onclick="selectIcon('macos', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-2-12h4v1h-4v-1zm0 3h4v1h-4v-1zm0 3h4v1h-4v-1z" />
+                </svg>
+                <span class="text-[10px] font-medium">macOS</span>
+            </button>
+            <button onclick="selectIcon('apple', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M18.71 19.5c-.83 1.24-1.71 2.45-3.1 2.48-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                </svg>
+                <span class="text-[10px] font-medium">Apple</span>
+            </button>
+            <button onclick="selectIcon('android', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6 text-[#a4c639]" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M17.523 15.3414C17.523 15.7725 17.1725 16.123 16.7414 16.123C16.3103 16.123 15.9598 15.7725 15.9598 15.3414C15.9598 14.9103 16.3103 14.5598 16.7414 14.5598C17.1725 14.5598 17.523 14.9103 17.523 15.3414ZM8.0402 15.3414C8.0402 15.7725 7.6897 16.123 7.2586 16.123C6.8275 16.123 6.477 15.7725 6.477 15.3414C6.477 14.9103 6.8275 14.5598 7.2586 14.5598C7.6897 14.5598 8.0402 14.9103 8.0402 15.3414ZM19.236 11.2359L21.1437 7.9354C21.2828 7.6961 21.199 7.388 20.9597 7.2489C20.7204 7.1098 20.4124 7.1936 20.2733 7.4329L18.3375 10.7818C16.6341 10.0076 14.7118 9.5693 12.6 9.5693C10.4882 9.5693 8.5659 10.0076 6.8625 10.7818L4.9267 7.4329C4.7876 7.1936 4.4795 7.1098 4.2402 7.2489C4.0009 7.388 3.9171 7.6961 4.0562 7.9354L5.964 11.2359C3.1206 12.637 1.1818 15.4243 1.1818 18.7182H22.8182C22.8182 15.4243 20.8794 12.637 18.036 11.2359L19.236 11.2359Z" />
+                </svg>
+                <span class="text-[10px] font-medium">Android</span>
+            </button>
+            <button onclick="selectIcon('synology', this)"
+                class="icon-btn border border-gray-200 rounded-lg p-2 flex flex-col items-center gap-1 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4zm1 2h14v10H5V6zm2 2v2h2V8H7zm3 0v2h2V8h-2zm3 0v2h2V8h-2zm-6 3v2h2v-2H7zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2z" />
+                </svg>
+                <span class="text-[10px] font-medium">Synology</span>
+            </button>
+        </div>
 
         <!-- Exit Node Toggle -->
         <div class="flex items-center justify-between mb-8">
@@ -155,11 +208,11 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             ${data.map(peer => `
-                                <tr class="hover:bg-gray-50 transition-colors">
+                             <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="relative flex-shrink-0 h-8 w-8 text-gray-400 bg-gray-100 rounded-md flex items-center justify-center">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                ${renderPeerIcon(peer.icon)}
                                                 <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${peer.connected ? 'bg-green-500' : 'bg-red-400'}" title="${peer.connected ? 'Online' : 'Offline'}"></div>
                                             </div>
                                             <div class="ml-4">
@@ -199,10 +252,36 @@
         }
     }
 
+    let selectedIcon = 'linux';
+
+    function selectIcon(icon, btn) {
+        selectedIcon = icon;
+        document.querySelectorAll('.icon-btn').forEach(b => {
+            b.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50', 'border-blue-500');
+        });
+        btn.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50', 'border-blue-500');
+    }
+
+    function renderPeerIcon(iconSlug) {
+        const icons = {
+            linux: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12.44,1.4C12,1.26,11.51,1.15,11,1.07V1.04C10.74,1,10.47,1,10.2,1,7.21,1,4.78,3.43,4.78,6.41c0,.2,0,.41,.03,.61C4.3,7.69,4,8.44,4,9.22c0,3,2,5.54,4.72,6.4,0,0,0,0,0,0-.4,1.21-2.18,1.6-3.48,1.86C4.4,17.65,4,18,4,18.44V20a2.02,2.02,0,0,0,.59,1.41A1.97,1.97,0,0,0,6,22H18a1.97,1.97,0,0,0,1.41-.59A2.02,2.02,0,0,0,20,20V18.44c0-.42-.31-.76-.73-.83-1.3-.26-3.08-.65-3.48-1.86,0,0,0,0,0,0,2.72-.86,4.72-3.4,4.72-6.4,0-.73-.26-1.42-.71-1.97.03-.23.04-.47.04-.71,0-2.98-2.43-5.41-5.41-5.41Z"/></svg>`,
+            windows: `<svg class="w-5 h-5 text-[#0078d4]" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699m10.949-7.949H24V24l-13.051-1.8Z"/></svg>`,
+            macos: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-2-12h4v1h-4v-1zm0 3h4v1h-4v-1zm0 3h4v1h-4v-1z"/></svg>`,
+            apple: `<svg class="w-5 h-5 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.1 2.48-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>`,
+            android: `<svg class="w-5 h-5 text-[#a4c639]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414C17.523 15.7725 17.1725 16.123 16.7414 16.123C16.3103 16.123 15.9598 15.7725 15.9598 15.3414C15.9598 14.9103 16.3103 14.5598 16.7414 14.5598C17.1725 14.5598 17.523 14.9103 17.523 15.3414ZM8.0402 15.3414C8.0402 15.7725 7.6897 16.123 7.2586 16.123C6.8275 16.123 6.477 15.7725 6.477 15.3414C6.477 14.9103 6.8275 14.5598 7.2586 14.5598C7.6897 14.5598 8.0402 14.9103 8.0402 15.3414ZM19.236 11.2359L21.1437 7.9354C21.2828 7.6961 21.199 7.388 20.9597 7.2489C20.7204 7.1098 20.4124 7.1936 20.2733 7.4329L18.3375 10.7818C16.6341 10.0076 14.7118 9.5693 12.6 9.5693C10.4882 9.5693 8.5659 10.0076 6.8625 10.7818L4.9267 7.4329C4.7876 7.1936 4.4795 7.1098 4.2402 7.2489C4.0009 7.388 3.9171 7.6961 4.0562 7.9354L5.964 11.2359C3.1206 12.637 1.1818 15.4243 1.1818 18.7182H22.8182C22.8182 15.4243 20.8794 12.637 18.036 11.2359L19.236 11.2359Z"/></svg>`,
+            synology: `<svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4zm1 2h14v10H5V6zm2 2v2h2V8H7zm3 0v2h2V8h-2zm3 0v2h2V8h-2zm-6 3v2h2v-2H7zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2z"/></svg>`,
+            default: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`
+        };
+        return icons[iconSlug] || icons.default;
+    }
+
     function openModal() {
         const modal = document.getElementById('modal');
         modal.classList.remove('hidden');
         document.getElementById('peer-name').focus();
+        // Reset icon selection
+        const firstIcon = document.querySelector('#icon-picker .icon-btn');
+        if (firstIcon) firstIcon.click();
     }
     function closeModal() {
         const modal = document.getElementById('modal');
@@ -223,7 +302,7 @@
             await fetch('/api/peers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name, use_as_exit_node: useExitNode })
+                body: JSON.stringify({ name: name, use_as_exit_node: useExitNode, icon: selectedIcon })
             });
             closeModal();
             fetchPeers();

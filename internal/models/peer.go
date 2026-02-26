@@ -15,6 +15,7 @@ type Peer struct {
 	Endpoints     string         `json:"endpoint"`
 	UseAsExitNode bool           `gorm:"default:true" json:"use_as_exit_node"`
 	Enabled       bool           `gorm:"default:true" json:"enabled"`
+	Icon          string         `json:"icon"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`

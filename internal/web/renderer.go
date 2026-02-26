@@ -18,6 +18,10 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	if !ok {
 		return nil // Avoid crashing if missing template
 	}
-	// Luôn sử dụng layout.html làm khung bao bọc
-	return tmpl.ExecuteTemplate(w, "layout.html", data)
+	// Kiểm tra xem template có chứa định nghĩa "layout.html" không.
+	// Nếu có thì dùng ExecuteTemplate, nếu không thì Execute trực tiếp (ví dụ login.html)
+	if tmpl.Lookup("layout.html") != nil {
+		return tmpl.ExecuteTemplate(w, "layout.html", data)
+	}
+	return tmpl.Execute(w, data)
 }
